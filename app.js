@@ -190,62 +190,52 @@ function renderSummaryCards(summary, previousSummary) {
 }
 
 function renderMiniCharts() {
-  const configs = [
-    { key: "transferRate", title: "Transfer Rate" },
-    { key: "admits", title: "# of Admits" },
-    { key: "aht", title: "AHT" },
-    { key: "attendancePercent", title: "Attendance" },
-    { key: "qaPercent", title: "QA Score" }
-  ];
   const currentSummary = summarizeRows(getFilteredRows(getSelectedMonth().rows));
   const previousMonth = getPreviousMonth(getSelectedMonth().key);
   const previousSummary = previousMonth ? summarizeRows(getFilteredRows(previousMonth.rows, { allowMissingAgentFallback: true })) : summarizeRows([]);
+  const key = focusedMiniKey();
+  const currentValue = getMiniMetricValue(currentSummary, key);
+  const previousValue = getMiniMetricValue(previousSummary, key);
+  const delta = currentValue - previousValue;
 
-  els.kpiMiniGrid.innerHTML = configs.map((config) => {
-    const currentValue = getMiniMetricValue(currentSummary, config.key);
-    const previousValue = getMiniMetricValue(previousSummary, config.key);
-    const delta = currentValue - previousValue;
-    return `
-      <article class="mini-chart-card panel">
-        <div class="mini-chart-head">
-          <div><h4>${config.title}</h4><p>Hover for monthly values</p></div>
-          <div class="mini-chart-meta">
-            <strong>${formatMiniMetric(config.key, currentValue)}</strong>
-            <span class="${getDeltaTone(config.key, delta)}">${formatMetricDelta(config.key, delta)}</span>
-          </div>
+  els.kpiMiniGrid.innerHTML = `
+    <article class="mini-chart-card panel">
+      <div class="mini-chart-head">
+        <div><h4>Focused KPI Trend: ${getKpiLabel(key === "attendancePercent" ? "attendance" : key === "qaPercent" ? "qa" : key)}</h4><p>Uses the selected KPI chip above. Hover to inspect monthly values.</p></div>
+        <div class="mini-chart-meta">
+          <strong>${formatMiniMetric(key, currentValue)}</strong>
+          <span class="${getDeltaTone(key, delta)}">${formatMetricDelta(key, delta)}</span>
         </div>
-        <canvas class="mini-canvas" data-mini-kpi="${config.key}" width="320" height="120"></canvas>
-      </article>
-    `;
-  }).join("");
+      </div>
+      <canvas class="mini-canvas" data-mini-kpi="${key}" width="1280" height="170"></canvas>
+    </article>
+  `;
 
-  els.kpiMiniGrid.querySelectorAll("[data-mini-kpi]").forEach((canvas) => {
-    const key = canvas.getAttribute("data-mini-kpi");
-    const series = state.data.months.map((month) => {
-      const summary = summarizeRows(getFilteredRows(month.rows, { allowMissingAgentFallback: true }));
-      return { monthKey: month.key, label: month.shortLabel, value: getMiniMetricValue(summary, key) };
-    });
+  const canvas = els.kpiMiniGrid.querySelector("[data-mini-kpi]");
+  const series = state.data.months.map((month) => {
+    const summary = summarizeRows(getFilteredRows(month.rows, { allowMissingAgentFallback: true }));
+    return { monthKey: month.key, label: month.shortLabel, value: getMiniMetricValue(summary, key) };
+  });
 
-    upsertChart(`mini-${key}`, canvas, {
-      type: "line",
-      data: {
-        labels: series.map((item) => item.label),
-        datasets: [{
-          label: getKpiLabel(key === "attendancePercent" ? "attendance" : key === "qaPercent" ? "qa" : key),
-          data: series.map((item) => item.value),
-          borderColor: "#15629e",
-          backgroundColor: "rgba(21,98,158,.14)",
-          pointBackgroundColor: series.map((item) => item.monthKey === getSelectedMonth().key ? "#1f255d" : "#5da9df"),
-          pointBorderColor: "#ffffff",
-          pointBorderWidth: 2,
-          pointRadius: series.map((item) => item.monthKey === getSelectedMonth().key ? 4 : 2.5),
-          tension: .35,
-          fill: true,
-          borderWidth: 2
-        }]
-      },
-      options: buildMiniChartOptions(key)
-    });
+  upsertChart("mini-focus", canvas, {
+    type: "line",
+    data: {
+      labels: series.map((item) => item.label),
+      datasets: [{
+        label: getKpiLabel(key === "attendancePercent" ? "attendance" : key === "qaPercent" ? "qa" : key),
+        data: series.map((item) => item.value),
+        borderColor: "#15629e",
+        backgroundColor: "rgba(21,98,158,.14)",
+        pointBackgroundColor: series.map((item) => item.monthKey === getSelectedMonth().key ? "#1f255d" : "#5da9df"),
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+        pointRadius: series.map((item) => item.monthKey === getSelectedMonth().key ? 5 : 3),
+        tension: .35,
+        fill: true,
+        borderWidth: 2.5
+      }]
+    },
+    options: buildMiniChartOptions(key)
   });
 }
 
@@ -480,6 +470,14 @@ function getMiniMetricValue(summary, key) {
     case "attendancePercent": return summary.attendance;
     case "qaPercent": return summary.qa;
     default: return getSummaryMetric(summary, key);
+  }
+}
+
+function focusedMiniKey() {
+  switch (state.focusedKpi) {
+    case "attendance": return "attendancePercent";
+    case "qa": return "qaPercent";
+    default: return state.focusedKpi;
   }
 }
 
