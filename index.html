@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flyland Recovery Network KPI Dashboard</title>
+<meta name="description" content="Interactive BPO KPI dashboard draft for Flyland Recovery Network.">
+<link rel="icon" type="image/png" href="./agslogo-128.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#d7e2f0;
+  --bg-strong:#c4d3e7;
+  --surface:rgba(247,250,254,.92);
+  --surface-strong:#ffffff;
+  --surface-alt:#eaf1f9;
+  --text:#0b1730;
+  --muted:#445a78;
+  --line:#bfd0e3;
+  --navy:#1f255d;
+  --blue:#14639f;
+  --sky:#5ca9df;
+  --sky-soft:#d4e8f9;
+  --good:#0d7c54;
+  --warn:#d58b22;
+  --bad:#c94752;
+  --shadow:0 18px 45px rgba(8,27,58,.16);
+  --radius-xl:28px;
+  --radius-lg:22px;
+  --radius-md:16px;
+  --radius-sm:12px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Manrope",sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(92,169,223,.25), transparent 32%),
+    radial-gradient(circle at right 10% top 20%, rgba(31,37,93,.16), transparent 24%),
+    linear-gradient(180deg,#eef3f9 0%,var(--bg) 48%,#e4ecf6 100%);
+  min-height:100vh;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+img{display:block;max-width:100%}
+.shell{max-width:1440px;margin:0 auto;padding:24px}
+.panel{
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,.82);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(16px);
+  border-radius:var(--radius-lg);
+}
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  padding:16px 18px;
+  position:sticky;
+  top:18px;
+  z-index:5;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.brand img{
+  width:58px;
+  height:58px;
+  object-fit:contain;
+  border-radius:18px;
+  background:#fff;
+  padding:5px;
+}
+.eyebrow{
+  margin:0 0 4px;
+  color:var(--blue);
+  text-transform:uppercase;
+  letter-spacing:.16em;
+  font-size:11px;
+  font-weight:800;
+}
+.brand h1{
+  margin:0;
+  font-size:22px;
+  line-height:1.1;
+}
+.brand p,.meta small,.section-head p,.table-note,.legend,.pill-note,.empty-state,.footnote{
+  color:var(--muted);
+}
+.top-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-end;
+}
+.meta{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.72);
+  border:1px solid var(--line);
+  border-radius:999px;
+}
+.meta strong{font-size:13px}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--good);box-shadow:0 0 0 6px rgba(15,157,104,.12)}
+.button{
+  border:none;
+  border-radius:999px;
+  min-height:44px;
+  padding:0 16px;
+  font-weight:800;
+  color:#fff;
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  box-shadow:0 10px 22px rgba(45,45,114,.2);
+}
+.button.secondary{
+  color:var(--text);
+  background:#fff;
+  border:1px solid var(--line);
+  box-shadow:none;
+}
+.hero{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:1.4fr .95fr;
+  gap:18px;
+}
+.hero-main{
+  padding:28px;
+  overflow:hidden;
+  position:relative;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(92,169,223,.18), transparent 28%),
+    radial-gradient(circle at 85% 25%, rgba(255,255,255,.09), transparent 20%),
+    linear-gradient(135deg,#1b2152 0%,#22447f 56%,#4c8ec5 118%);
+  color:#fff;
+}
+.hero-main:after{
+  content:"";
+  position:absolute;
+  inset:auto -80px -120px auto;
+  width:260px;
+  height:260px;
+  border-radius:999px;
+  background:rgba(255,255,255,.08);
+}
+.hero-main h2{
+  margin:0 0 10px;
+  font-size:42px;
+  line-height:1;
+  max-width:12ch;
+}
+.hero-main p{
+  margin:0;
+  max-width:66ch;
+  color:rgba(255,255,255,.9);
+  line-height:1.75;
+}
+.hero-tags,.pill-row,.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.hero-tags{margin-top:18px}
+.hero-tags span,.metric-badge,.score-chip,.legend span{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border-radius:999px;
+  padding:9px 12px;
+}
+.hero-tags span{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.18);
+  font-size:12px;
+  font-weight:700;
+}
+.hero-side{
+  display:grid;
+  gap:18px;
+}
+.hero-card{
+  padding:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(238,245,252,.94));
+}
+.hero-card h3,.section-head h3,.card h3,.subheading{
+  margin:0 0 8px;
+  font-size:18px;
+}
+.metric-strip{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:14px;
+}
+.metric-badge{
+  background:var(--surface-alt);
+  border:1px solid var(--line);
+  flex-direction:column;
+  align-items:flex-start;
+  border-radius:16px;
+}
+.metric-badge strong{font-size:20px}
+.metric-badge span{font-size:12px;color:var(--muted)}
+.controls{
+  margin-top:18px;
+  padding:18px;
+  display:grid;
+  grid-template-columns:1.5fr .9fr;
+  gap:16px;
+}
+.control-block{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.field label{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--muted);
+}
+.field select,.field input{
+  width:100%;
+  min-height:46px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:#fff;
+  padding:0 14px;
+  color:var(--text);
+}
+.field select:focus,.field input:focus{
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:0 0 0 4px rgba(31,124,193,.1);
+}
+.control-actions{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px;
+  border-radius:18px;
+  background:linear-gradient(180deg,#f4f8fd,#e7f0fa);
+  border:1px solid var(--line);
+}
+.control-actions p{
+  margin:0;
+  line-height:1.7;
+  font-size:13px;
+}
+.cards{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:14px;
+}
+.card{
+  padding:18px;
+  position:relative;
+  overflow:hidden;
+}
+.card:before{
+  content:"";
+  position:absolute;
+  inset:0 auto auto 0;
+  width:100%;
+  height:4px;
+  background:linear-gradient(90deg,var(--navy),var(--blue),var(--sky));
+}
+.card-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+.card-header span{
+  color:var(--muted);
+  font-size:12px;
+}
+.card strong{
+  display:block;
+  margin-top:14px;
+  font-size:34px;
+  line-height:1;
+}
+.delta{
+  margin-top:14px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+.delta.up{background:rgba(15,157,104,.1);color:var(--good)}
+.delta.down{background:rgba(216,74,85,.1);color:var(--bad)}
+.delta.flat{background:rgba(88,112,143,.12);color:var(--muted)}
+.layout{
+  margin-top:18px;
+  display:grid;
+  grid-template-columns:1.35fr .95fr;
+  gap:18px;
+}
+.stack{
+  display:grid;
+  gap:18px;
+}
+.chart-panel,.table-panel,.rules-panel{
+  padding:20px;
+}
+.section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:16px;
+}
+.section-head p{
+  margin:4px 0 0;
+  font-size:13px;
+  line-height:1.7;
+}
+.chart-wrap{
+  position:relative;
+  min-height:290px;
+}
+canvas{width:100%;height:100%}
+.pill-row{margin-bottom:14px}
+.score-chip{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  font-weight:800;
+}
+.score-chip.active{
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  color:#fff;
+  border-color:transparent;
+}
+.compare-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.compare-box{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  background:linear-gradient(180deg,#fff,#edf4fb);
+}
+.compare-box strong{
+  display:block;
+  font-size:26px;
+  margin:8px 0 6px;
+}
+.compare-bar{
+  height:10px;
+  border-radius:999px;
+  background:#e4eef9;
+  overflow:hidden;
+  margin-top:10px;
+}
+.compare-bar span{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--blue),var(--sky));
+}
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.mini-panel{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  background:#fdfefe;
+}
+.mini-panel h4{
+  margin:0 0 6px;
+  font-size:14px;
+}
+.mini-panel strong{
+  font-size:28px;
+}
+.leaderboard{
+  display:grid;
+  gap:10px;
+}
+.leader-item{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:8px;
+  padding:12px 14px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.leader-item:hover,.leader-item.active{
+  transform:translateY(-1px);
+  border-color:#9fc8ea;
+  box-shadow:0 14px 24px rgba(31,124,193,.12);
+}
+.leader-item small,.leader-item span{color:var(--muted)}
+.leader-item strong{font-size:16px}
+.table-wrap{
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:18px;
+}
+table{
+  width:100%;
+  min-width:980px;
+  border-collapse:collapse;
+  background:#fff;
+}
+th,td{
+  padding:13px 14px;
+  border-bottom:1px solid #ecf2fa;
+  text-align:left;
+  font-size:13px;
+}
+th{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--muted);
+  background:#eef5fc;
+}
+tbody tr:hover{background:#f8fbff}
+.tag{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:40px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:var(--sky-soft);
+  color:var(--navy);
+  font-weight:800;
+  font-size:12px;
+}
+.tag.good{background:rgba(15,157,104,.1);color:var(--good)}
+.tag.warn{background:rgba(243,156,61,.14);color:#b56f0d}
+.tag.bad{background:rgba(216,74,85,.12);color:var(--bad)}
+.rules-table{
+  width:100%;
+  min-width:0;
+}
+.rules-table td,.rules-table th{
+  font-size:12px;
+  text-align:center;
+}
+.rules-table td:first-child,.rules-table th:first-child{
+  text-align:left;
+}
+.empty-state{
+  padding:28px 20px;
+  text-align:center;
+}
+.footnote{
+  margin-top:16px;
+  font-size:12px;
+  line-height:1.7;
+}
+@media (max-width:1180px){
+  .hero,.controls,.layout{grid-template-columns:1fr}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .control-block{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .shell{padding:14px}
+  .topbar{position:static}
+  .topbar,.brand,.top-actions,.section-head{flex-direction:column;align-items:flex-start}
+  .hero-main h2{font-size:32px}
+  .metric-strip,.cards,.kpi-grid,.compare-grid,.control-block{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar panel">
+      <div class="brand">
+        <img src="./agslogo.png" alt="Alliance Global Solutions logo">
+        <div>
+          <p class="eyebrow">Flyland Recovery Network</p>
+          <h1>Key Performance Indicator Dashboard</h1>
+          <p>Website dashboard for monthly BPO KPI review and month-over-month comparison</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="meta">
+          <span class="dot"></span>
+          <small>Data Mode</small>
+          <strong>Approval prototype</strong>
+        </div>
+        <div class="meta">
+          <small>Last refresh</small>
+          <strong id="last-refresh">-</strong>
+        </div>
+        <button id="regenerate-data" class="button secondary" type="button">Refresh Sample Data</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-main panel">
+        <p class="eyebrow" style="color:#d7ecff">Executive View</p>
+        <h2>Flyland Recovery Network KPI Dashboard</h2>
+        <p>
+          This approval draft is designed as a website-based KPI dashboard for monthly BPO performance review.
+          It focuses on the five operational scorecards you specified and supports team, agent, and previous-month comparison before we connect live Google Sheets data.
+        </p>
+        <div class="hero-tags">
+          <span>Five KPI scorecards</span>
+          <span>Month comparison</span>
+          <span>Team and agent filters</span>
+          <span>Google Sheets ready</span>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="hero-card panel">
+          <h3>Selected View</h3>
+          <p id="selection-summary">All teams overview for the latest month.</p>
+          <div class="metric-strip">
+            <div class="metric-badge">
+              <span>Current Month</span>
+              <strong id="selected-month-label">-</strong>
+            </div>
+            <div class="metric-badge">
+              <span>Comparison</span>
+              <strong id="comparison-month-label">-</strong>
+            </div>
+            <div class="metric-badge">
+              <span>Focused KPI</span>
+              <strong id="focus-kpi-label">-</strong>
+            </div>
+          </div>
+        </div>
+        <div class="hero-card panel">
+          <h3>Weighting and Score Logic</h3>
+          <p>Performance carries 50% of the total KPI and is derived from Transfer Rate, # of Admits, and AHT. Attendance and QA Score carry 25% each.</p>
+          <div class="pill-row" style="margin-top:14px">
+            <span class="score-chip">Performance 50%</span>
+            <span class="score-chip">Attendance 25%</span>
+            <span class="score-chip">QA 25%</span>
+          </div>
+          <p class="footnote">Attendance intentionally uses scores 1, 2, 3, and 5 only, based on the scoring guide you confirmed.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="controls panel">
+      <div class="control-block">
+        <div class="field">
+          <label for="month-select">Month</label>
+          <select id="month-select"></select>
+        </div>
+        <div class="field">
+          <label for="team-select">Team</label>
+          <select id="team-select"></select>
+        </div>
+        <div class="field">
+          <label for="agent-select">Agent</label>
+          <select id="agent-select"></select>
+        </div>
+        <div class="field">
+          <label for="search-input">Quick Search</label>
+          <input id="search-input" type="text" placeholder="Search agent name">
+        </div>
+      </div>
+      <div class="control-actions">
+        <p id="data-story">Showing the latest month with all teams combined. Use the filters to compare team trends or drill down to a specific agent.</p>
+        <div class="pill-row" id="focus-buttons"></div>
+      </div>
+    </section>
+
+    <section class="cards" id="summary-cards"></section>
+
+    <section class="layout">
+      <div class="stack">
+        <div class="chart-panel panel">
+          <div class="section-head">
+            <div>
+              <h3>Monthly Weighted KPI Trend</h3>
+              <p>Trend line of overall KPI score across recent months. This helps show whether the team is improving, slipping, or holding steady.</p>
+            </div>
+            <div class="legend">
+              <span><strong id="trend-current-score">-</strong> current</span>
+              <span><strong id="trend-previous-score">-</strong> previous</span>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="trend-chart" width="860" height="320"></canvas></div>
+        </div>
+
+        <div class="chart-panel panel">
+          <div class="section-head">
+            <div>
+              <h3 id="comparison-title">Focused KPI Comparison</h3>
+              <p id="comparison-copy">Current month versus previous month view for the selected KPI.</p>
+            </div>
+            <div class="legend">
+              <span id="metric-direction">-</span>
+            </div>
+          </div>
+          <div class="compare-grid" id="comparison-grid"></div>
+        </div>
+
+        <div class="table-panel panel">
+          <div class="section-head">
+            <div>
+              <h3>Agent Monthly Detail</h3>
+              <p>Roster-style detail to review raw values, KPI scores, and overall weighted score. This is where we can later match the Google Sheets columns.</p>
+            </div>
+            <div class="table-note" id="table-count">-</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Team</th>
+                  <th>Transfer Rate</th>
+                  <th>Admits</th>
+                  <th>AHT</th>
+                  <th>Attendance</th>
+                  <th>QA</th>
+                  <th>Perf Score</th>
+                  <th>Final KPI</th>
+                </tr>
+              </thead>
+              <tbody id="detail-body">
+                <tr><td colspan="9" class="empty-state">Loading sample data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="chart-panel panel">
+          <div class="section-head">
+            <div>
+              <h3>KPI Score Distribution</h3>
+              <p>Count of agents landing on score 1 to 5 for the selected KPI. Click another KPI above to pivot this view instantly.</p>
+            </div>
+            <div class="legend" id="distribution-legend"></div>
+          </div>
+          <div class="chart-wrap"><canvas id="distribution-chart" width="620" height="320"></canvas></div>
+        </div>
+
+        <div class="chart-panel panel">
+          <div class="section-head">
+            <div>
+              <h3>Top Performers</h3>
+              <p>Top agents for the selected month. Clicking a name filters the whole dashboard down to that agent.</p>
+            </div>
+            <div class="legend"><span id="leaderboard-scope">All teams</span></div>
+          </div>
+          <div class="leaderboard" id="leaderboard"></div>
+        </div>
+
+        <div class="rules-panel panel">
+          <div class="section-head">
+            <div>
+              <h3>KPI Score Guide</h3>
+              <p>Draft scoring reference based on the KPI image you shared. Attendance score 4 is left intentionally blank because the source image was blank.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="rules-table">
+              <thead>
+                <tr>
+                  <th>KPI</th>
+                  <th>1</th>
+                  <th>2</th>
+                  <th>3</th>
+                  <th>4</th>
+                  <th>5</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Transfer Rate</td>
+                  <td>&lt;3%</td>
+                  <td>6%</td>
+                  <td>9%</td>
+                  <td>12%</td>
+                  <td>&gt;15%</td>
+                </tr>
+                <tr>
+                  <td># of Admits</td>
+                  <td>0</td>
+                  <td>1</td>
+                  <td>5</td>
+                  <td>9</td>
+                  <td>&gt;13</td>
+                </tr>
+                <tr>
+                  <td>AHT</td>
+                  <td>&gt;04:09</td>
+                  <td>03:32</td>
+                  <td>02:56</td>
+                  <td>02:20</td>
+                  <td>&lt;01:44</td>
+                </tr>
+                <tr>
+                  <td>Attendance</td>
+                  <td>&lt;90%</td>
+                  <td>90-94%</td>
+                  <td>95-99%</td>
+                  <td>Blank</td>
+                  <td>100%</td>
+                </tr>
+                <tr>
+                  <td>QA Score</td>
+                  <td>&lt;95%</td>
+                  <td>95-97%</td>
+                  <td>98%</td>
+                  <td>99%</td>
+                  <td>100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="footnote">Next step later: connect this same layout to Google Sheets JSON or Apps Script so the filters and visuals will use live production data instead of the local demo dataset.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
