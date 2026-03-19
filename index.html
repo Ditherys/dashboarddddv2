@@ -4,123 +4,104 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flyland Recovery Network KPI Dashboard</title>
-<meta name="description" content="Interactive BPO KPI dashboard draft for Flyland Recovery Network.">
+<meta name="description" content="Interactive BPO KPI dashboard for Flyland Recovery Network.">
 <link rel="icon" type="image/png" href="./agslogo-128.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#d7e2f0;
-  --bg-strong:#c4d3e7;
-  --surface:rgba(247,250,254,.92);
-  --surface-strong:#ffffff;
-  --surface-alt:#eaf1f9;
-  --text:#0b1730;
-  --muted:#445a78;
+  --bg:#dbe5f1;
+  --surface:rgba(248,251,255,.95);
+  --surface-2:#eef4fb;
+  --surface-3:#ffffff;
+  --text:#0c1730;
+  --muted:#49617f;
   --line:#bfd0e3;
   --navy:#1f255d;
-  --blue:#14639f;
-  --sky:#5ca9df;
-  --sky-soft:#d4e8f9;
-  --good:#0d7c54;
-  --warn:#d58b22;
-  --bad:#c94752;
-  --shadow:0 18px 45px rgba(8,27,58,.16);
-  --radius-xl:28px;
-  --radius-lg:22px;
-  --radius-md:16px;
-  --radius-sm:12px;
+  --blue:#15629e;
+  --sky:#5da9df;
+  --good:#0f7b56;
+  --warn:#cf8a27;
+  --bad:#c64954;
+  --shadow:0 18px 38px rgba(10,29,56,.14);
+  --radius-lg:18px;
+  --radius-md:14px;
+  --radius-sm:10px;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
 body{
   margin:0;
+  min-height:100vh;
   font-family:"Manrope",sans-serif;
   color:var(--text);
   background:
-    radial-gradient(circle at top left, rgba(92,169,223,.25), transparent 32%),
-    radial-gradient(circle at right 10% top 20%, rgba(31,37,93,.16), transparent 24%),
-    linear-gradient(180deg,#eef3f9 0%,var(--bg) 48%,#e4ecf6 100%);
-  min-height:100vh;
+    radial-gradient(circle at top left, rgba(93,169,223,.22), transparent 28%),
+    radial-gradient(circle at right top, rgba(31,37,93,.14), transparent 22%),
+    linear-gradient(180deg,#eef3f8 0%,var(--bg) 48%,#e3ebf5 100%);
 }
 button,input,select{font:inherit}
 button{cursor:pointer}
 img{display:block;max-width:100%}
-.shell{max-width:1440px;margin:0 auto;padding:24px}
+.shell{max-width:1780px;margin:0 auto;padding:12px 16px 18px}
 .panel{
   background:var(--surface);
-  border:1px solid rgba(255,255,255,.82);
+  border:1px solid rgba(255,255,255,.88);
   box-shadow:var(--shadow);
   backdrop-filter:blur(16px);
   border-radius:var(--radius-lg);
 }
 .topbar{
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  gap:18px;
-  padding:16px 18px;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 14px;
   position:sticky;
-  top:18px;
+  top:8px;
   z-index:5;
 }
-.brand{
-  display:flex;
-  align-items:center;
-  gap:14px;
-}
+.brand{display:flex;align-items:center;gap:12px}
 .brand img{
-  width:58px;
-  height:58px;
+  width:42px;
+  height:42px;
   object-fit:contain;
-  border-radius:18px;
+  border-radius:12px;
   background:#fff;
-  padding:5px;
+  padding:4px;
 }
 .eyebrow{
-  margin:0 0 4px;
+  margin:0 0 3px;
   color:var(--blue);
   text-transform:uppercase;
   letter-spacing:.16em;
-  font-size:11px;
+  font-size:10px;
   font-weight:800;
 }
-.brand h1{
-  margin:0;
-  font-size:22px;
-  line-height:1.1;
-}
-.brand p,.meta small,.section-head p,.table-note,.legend,.pill-note,.empty-state,.footnote{
-  color:var(--muted);
-}
-.top-actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  align-items:center;
-  justify-content:flex-end;
-}
+.brand h1{margin:0;font-size:18px;line-height:1.1}
+.brand p,.section-head p,.table-note,.legend,.empty-state,.footnote,.mini-chart-head p,.metric-badge span,.meta small{color:var(--muted)}
+.brand p{margin:3px 0 0;font-size:12px;line-height:1.45}
+.top-actions{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:8px}
 .meta{
   display:inline-flex;
   align-items:center;
-  gap:8px;
-  padding:10px 12px;
-  background:rgba(255,255,255,.72);
+  gap:6px;
+  padding:8px 10px;
+  background:rgba(255,255,255,.78);
   border:1px solid var(--line);
   border-radius:999px;
 }
-.meta strong{font-size:13px}
-.dot{width:8px;height:8px;border-radius:999px;background:var(--good);box-shadow:0 0 0 6px rgba(15,157,104,.12)}
+.meta strong{font-size:12px}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--good);box-shadow:0 0 0 5px rgba(15,123,86,.12)}
 .button{
+  min-height:38px;
+  padding:0 14px;
   border:none;
   border-radius:999px;
-  min-height:44px;
-  padding:0 16px;
   font-weight:800;
   color:#fff;
   background:linear-gradient(135deg,var(--navy),var(--blue));
-  box-shadow:0 10px 22px rgba(45,45,114,.2);
+  box-shadow:0 10px 18px rgba(31,37,93,.18);
 }
 .button.secondary{
   color:var(--text);
@@ -128,153 +109,107 @@ img{display:block;max-width:100%}
   border:1px solid var(--line);
   box-shadow:none;
 }
-.hero{
-  margin-top:18px;
+.overview{
+  margin-top:10px;
   display:grid;
-  grid-template-columns:1.4fr .95fr;
-  gap:18px;
-}
-.hero-main{
-  padding:28px;
-  overflow:hidden;
-  position:relative;
-  background:
-    radial-gradient(circle at 10% 20%, rgba(92,169,223,.18), transparent 28%),
-    radial-gradient(circle at 85% 25%, rgba(255,255,255,.09), transparent 20%),
-    linear-gradient(135deg,#1b2152 0%,#22447f 56%,#4c8ec5 118%);
-  color:#fff;
-}
-.hero-main:after{
-  content:"";
-  position:absolute;
-  inset:auto -80px -120px auto;
-  width:260px;
-  height:260px;
-  border-radius:999px;
-  background:rgba(255,255,255,.08);
-}
-.hero-main h2{
-  margin:0 0 10px;
-  font-size:42px;
-  line-height:1;
-  max-width:12ch;
-}
-.hero-main p{
-  margin:0;
-  max-width:66ch;
-  color:rgba(255,255,255,.9);
-  line-height:1.75;
-}
-.hero-tags,.pill-row,.legend{
-  display:flex;
-  flex-wrap:wrap;
+  grid-template-columns:1.25fr .95fr;
   gap:10px;
 }
-.hero-tags{margin-top:18px}
-.hero-tags span,.metric-badge,.score-chip,.legend span{
+.overview-main,.overview-side-card{padding:14px}
+.overview-main h2{margin:0 0 6px;font-size:24px;line-height:1.08}
+.overview-main p{margin:0;max-width:82ch;color:var(--muted);font-size:13px;line-height:1.6}
+.mini-stat-row,.legend,.pill-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.mini-stat{
   display:inline-flex;
   align-items:center;
-  gap:8px;
+  gap:6px;
+  padding:6px 10px;
   border-radius:999px;
-  padding:9px 12px;
-}
-.hero-tags span{
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.18);
+  background:#fff;
+  border:1px solid var(--line);
   font-size:12px;
-  font-weight:700;
+  font-weight:800;
 }
-.hero-side{
-  display:grid;
-  gap:18px;
-}
-.hero-card{
-  padding:22px;
-  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(238,245,252,.94));
-}
-.hero-card h3,.section-head h3,.card h3,.subheading{
-  margin:0 0 8px;
-  font-size:18px;
-}
+.overview-side{display:grid;gap:10px}
 .metric-strip{
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:10px;
-  margin-top:14px;
+  gap:8px;
+  margin-top:10px;
 }
 .metric-badge{
-  background:var(--surface-alt);
+  padding:10px 12px;
+  border-radius:12px;
   border:1px solid var(--line);
-  flex-direction:column;
-  align-items:flex-start;
-  border-radius:16px;
+  background:var(--surface-2);
 }
-.metric-badge strong{font-size:20px}
-.metric-badge span{font-size:12px;color:var(--muted)}
+.metric-badge strong{display:block;margin-top:4px;font-size:16px}
+.overview-side-card h3,.section-head h3,.card h3{margin:0 0 6px;font-size:16px}
+.overview-side-card p{margin:0;font-size:12px;line-height:1.55;color:var(--muted)}
 .controls{
-  margin-top:18px;
-  padding:18px;
+  margin-top:10px;
+  padding:12px;
   display:grid;
-  grid-template-columns:1.5fr .9fr;
-  gap:16px;
+  grid-template-columns:1.8fr 1fr;
+  gap:10px;
 }
 .control-block{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:12px;
+  gap:10px;
 }
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
+.field{display:flex;flex-direction:column;gap:6px}
 .field label{
-  font-size:11px;
+  font-size:10px;
   font-weight:800;
   text-transform:uppercase;
-  letter-spacing:.12em;
+  letter-spacing:.14em;
   color:var(--muted);
 }
 .field select,.field input{
   width:100%;
-  min-height:46px;
-  border-radius:14px;
+  min-height:40px;
+  padding:0 12px;
   border:1px solid var(--line);
+  border-radius:12px;
   background:#fff;
-  padding:0 14px;
   color:var(--text);
 }
 .field select:focus,.field input:focus{
   outline:none;
   border-color:var(--blue);
-  box-shadow:0 0 0 4px rgba(31,124,193,.1);
+  box-shadow:0 0 0 4px rgba(21,98,158,.1);
 }
 .control-actions{
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  gap:12px;
-  padding:14px;
-  border-radius:18px;
-  background:linear-gradient(180deg,#f4f8fd,#e7f0fa);
+  padding:10px 12px;
   border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg,#f5f9fd,#e8f0f9);
 }
-.control-actions p{
-  margin:0;
-  line-height:1.7;
-  font-size:13px;
+.control-actions p{margin:0 0 10px;font-size:12px;line-height:1.55}
+.score-chip{
+  display:inline-flex;
+  align-items:center;
+  padding:4px 10px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  font-size:11px;
+  font-weight:800;
+}
+.score-chip.active{
+  background:linear-gradient(135deg,var(--navy),var(--blue));
+  color:#fff;
+  border-color:transparent;
 }
 .cards{
-  margin-top:18px;
+  margin-top:10px;
   display:grid;
   grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:14px;
+  gap:10px;
 }
-.card{
-  padding:18px;
-  position:relative;
-  overflow:hidden;
-}
+.card{padding:14px;position:relative;overflow:hidden}
 .card:before{
   content:"";
   position:absolute;
@@ -283,164 +218,84 @@ img{display:block;max-width:100%}
   height:4px;
   background:linear-gradient(90deg,var(--navy),var(--blue),var(--sky));
 }
-.card-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
-}
-.card-header span{
-  color:var(--muted);
-  font-size:12px;
-}
-.card strong{
-  display:block;
-  margin-top:14px;
-  font-size:34px;
-  line-height:1;
-}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.card-header span{font-size:11px;color:var(--muted)}
+.card strong{display:block;margin-top:10px;font-size:25px;line-height:1}
 .delta{
-  margin-top:14px;
   display:inline-flex;
   align-items:center;
-  gap:8px;
-  padding:7px 10px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:800;
-}
-.delta.up{background:rgba(15,157,104,.1);color:var(--good)}
-.delta.down{background:rgba(216,74,85,.1);color:var(--bad)}
-.delta.flat{background:rgba(88,112,143,.12);color:var(--muted)}
-.layout{
-  margin-top:18px;
-  display:grid;
-  grid-template-columns:1.35fr .95fr;
-  gap:18px;
-}
-.stack{
-  display:grid;
-  gap:18px;
-}
-.chart-panel,.table-panel,.rules-panel{
-  padding:20px;
-}
-.section-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-  margin-bottom:16px;
-}
-.section-head p{
-  margin:4px 0 0;
-  font-size:13px;
-  line-height:1.7;
-}
-.chart-wrap{
-  position:relative;
-  min-height:290px;
-}
-canvas{width:100%;height:100%}
-.pill-row{margin-bottom:14px}
-.score-chip{
-  border:1px solid var(--line);
-  background:#fff;
-  color:var(--text);
-  font-weight:800;
-}
-.score-chip.active{
-  background:linear-gradient(135deg,var(--navy),var(--blue));
-  color:#fff;
-  border-color:transparent;
-}
-.compare-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-}
-.compare-box{
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:16px;
-  background:linear-gradient(180deg,#fff,#edf4fb);
-}
-.compare-box strong{
-  display:block;
-  font-size:26px;
-  margin:8px 0 6px;
-}
-.compare-bar{
-  height:10px;
-  border-radius:999px;
-  background:#e4eef9;
-  overflow:hidden;
+  gap:6px;
   margin-top:10px;
-}
-.compare-bar span{
-  display:block;
-  height:100%;
+  padding:6px 9px;
   border-radius:999px;
-  background:linear-gradient(90deg,var(--blue),var(--sky));
+  font-size:11px;
+  font-weight:800;
 }
-.kpi-grid{
+.delta.up{background:rgba(15,123,86,.1);color:var(--good)}
+.delta.down{background:rgba(198,73,84,.11);color:var(--bad)}
+.delta.flat{background:rgba(73,97,127,.12);color:var(--muted)}
+.mini-grid{
+  margin-top:10px;
   display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
-}
-.mini-panel{
-  border:1px solid var(--line);
-  border-radius:18px;
-  padding:16px;
-  background:#fdfefe;
-}
-.mini-panel h4{
-  margin:0 0 6px;
-  font-size:14px;
-}
-.mini-panel strong{
-  font-size:28px;
-}
-.leaderboard{
-  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:10px;
 }
+.mini-chart-card{padding:12px}
+.mini-chart-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
+.mini-chart-head h4{margin:0 0 3px;font-size:14px}
+.mini-chart-head p{margin:0;font-size:11px}
+.mini-chart-meta{text-align:right}
+.mini-chart-meta strong{display:block;font-size:18px}
+.mini-chart-meta span{font-size:11px;color:var(--muted)}
+.mini-chart-meta .up{color:var(--good)}
+.mini-chart-meta .down{color:var(--bad)}
+.mini-chart-meta .flat{color:var(--muted)}
+.mini-canvas{width:100%;height:120px;border-radius:12px;background:linear-gradient(180deg,#f8fbff,#edf4fb)}
+.layout{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1.55fr .95fr;
+  gap:10px;
+}
+.stack{display:grid;gap:10px}
+.chart-panel,.table-panel,.rules-panel{padding:14px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.section-head p{margin:3px 0 0;font-size:12px;line-height:1.55}
+.chart-wrap{position:relative;min-height:250px}
+canvas{width:100%;height:100%}
+.compare-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.compare-box{
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg,#fff,#edf4fb);
+}
+.compare-box strong{display:block;margin:7px 0 5px;font-size:24px}
+.compare-bar{height:9px;margin-top:10px;border-radius:999px;overflow:hidden;background:#dfeaf6}
+.compare-bar span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--sky))}
+.leaderboard{display:grid;gap:8px}
 .leader-item{
   display:grid;
   grid-template-columns:1fr auto;
   gap:8px;
-  padding:12px 14px;
+  padding:10px 12px;
   border:1px solid var(--line);
-  border-radius:16px;
+  border-radius:14px;
   background:#fff;
-  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 .leader-item:hover,.leader-item.active{
   transform:translateY(-1px);
-  border-color:#9fc8ea;
-  box-shadow:0 14px 24px rgba(31,124,193,.12);
+  border-color:#99c2e5;
+  box-shadow:0 12px 20px rgba(21,98,158,.12);
 }
 .leader-item small,.leader-item span{color:var(--muted)}
-.leader-item strong{font-size:16px}
-.table-wrap{
-  overflow:auto;
-  border:1px solid var(--line);
-  border-radius:18px;
-}
-table{
-  width:100%;
-  min-width:980px;
-  border-collapse:collapse;
-  background:#fff;
-}
-th,td{
-  padding:13px 14px;
-  border-bottom:1px solid #ecf2fa;
-  text-align:left;
-  font-size:13px;
-}
+.leader-item strong{font-size:15px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;min-width:980px;border-collapse:collapse;background:#fff}
+th,td{padding:11px 12px;border-bottom:1px solid #e8f0f8;text-align:left;font-size:12px}
 th{
-  font-size:11px;
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:.12em;
   color:var(--muted);
@@ -451,48 +306,32 @@ tbody tr:hover{background:#f8fbff}
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:40px;
-  padding:6px 10px;
+  min-width:38px;
+  padding:5px 8px;
   border-radius:999px;
-  background:var(--sky-soft);
+  background:#dcecf9;
   color:var(--navy);
+  font-size:11px;
   font-weight:800;
-  font-size:12px;
 }
-.tag.good{background:rgba(15,157,104,.1);color:var(--good)}
-.tag.warn{background:rgba(243,156,61,.14);color:#b56f0d}
-.tag.bad{background:rgba(216,74,85,.12);color:var(--bad)}
-.rules-table{
-  width:100%;
-  min-width:0;
-}
-.rules-table td,.rules-table th{
-  font-size:12px;
-  text-align:center;
-}
-.rules-table td:first-child,.rules-table th:first-child{
-  text-align:left;
-}
-.empty-state{
-  padding:28px 20px;
-  text-align:center;
-}
-.footnote{
-  margin-top:16px;
-  font-size:12px;
-  line-height:1.7;
-}
-@media (max-width:1180px){
-  .hero,.controls,.layout{grid-template-columns:1fr}
-  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tag.good{background:rgba(15,123,86,.1);color:var(--good)}
+.tag.warn{background:rgba(207,138,39,.14);color:var(--warn)}
+.tag.bad{background:rgba(198,73,84,.12);color:var(--bad)}
+.rules-table{width:100%;min-width:0}
+.rules-table td,.rules-table th{text-align:center;font-size:11px}
+.rules-table td:first-child,.rules-table th:first-child{text-align:left}
+.empty-state{padding:24px 18px;text-align:center}
+.footnote{margin-top:12px;font-size:12px;line-height:1.55}
+@media (max-width:1280px){
+  .overview,.controls,.layout{grid-template-columns:1fr}
+  .cards,.mini-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .control-block{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:760px){
-  .shell{padding:14px}
+  .shell{padding:12px}
   .topbar{position:static}
   .topbar,.brand,.top-actions,.section-head{flex-direction:column;align-items:flex-start}
-  .hero-main h2{font-size:32px}
-  .metric-strip,.cards,.kpi-grid,.compare-grid,.control-block{grid-template-columns:1fr}
+  .metric-strip,.cards,.mini-grid,.compare-grid,.control-block{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -504,40 +343,29 @@ tbody tr:hover{background:#f8fbff}
         <div>
           <p class="eyebrow">Flyland Recovery Network</p>
           <h1>Key Performance Indicator Dashboard</h1>
-          <p>Website dashboard for monthly BPO KPI review and month-over-month comparison</p>
+          <p>Monthly BPO KPI review and previous-month comparison</p>
         </div>
       </div>
       <div class="top-actions">
-        <div class="meta">
-          <span class="dot"></span>
-          <small>Data Mode</small>
-          <strong>Approval prototype</strong>
-        </div>
-        <div class="meta">
-          <small>Last refresh</small>
-          <strong id="last-refresh">-</strong>
-        </div>
+        <div class="meta"><span class="dot"></span><small>Mode</small><strong>Approval prototype</strong></div>
+        <div class="meta"><small>Last refresh</small><strong id="last-refresh">-</strong></div>
         <button id="regenerate-data" class="button secondary" type="button">Refresh Sample Data</button>
       </div>
     </header>
 
-    <section class="hero">
-      <div class="hero-main panel">
-        <p class="eyebrow" style="color:#d7ecff">Executive View</p>
-        <h2>Flyland Recovery Network KPI Dashboard</h2>
-        <p>
-          This approval draft is designed as a website-based KPI dashboard for monthly BPO performance review.
-          It focuses on the five operational scorecards you specified and supports team, agent, and previous-month comparison before we connect live Google Sheets data.
-        </p>
-        <div class="hero-tags">
-          <span>Five KPI scorecards</span>
-          <span>Month comparison</span>
-          <span>Team and agent filters</span>
-          <span>Google Sheets ready</span>
+    <section class="overview">
+      <div class="overview-main panel">
+        <h2>Compact KPI monitoring with month-over-month comparison.</h2>
+        <p>This layout is optimized for quick review, less scrolling, and better use of horizontal space. The current version still uses sample data in local storage, but the structure is ready for Google Sheets and Netlify deployment.</p>
+        <div class="mini-stat-row" style="margin-top:10px">
+          <span class="mini-stat">5 KPI scorecards</span>
+          <span class="mini-stat">Per-KPI mini charts</span>
+          <span class="mini-stat">Team and agent filters</span>
+          <span class="mini-stat">Month comparison</span>
         </div>
       </div>
-      <div class="hero-side">
-        <div class="hero-card panel">
+      <div class="overview-side">
+        <div class="overview-side-card panel">
           <h3>Selected View</h3>
           <p id="selection-summary">All teams overview for the latest month.</p>
           <div class="metric-strip">
@@ -554,16 +382,6 @@ tbody tr:hover{background:#f8fbff}
               <strong id="focus-kpi-label">-</strong>
             </div>
           </div>
-        </div>
-        <div class="hero-card panel">
-          <h3>Weighting and Score Logic</h3>
-          <p>Performance carries 50% of the total KPI and is derived from Transfer Rate, # of Admits, and AHT. Attendance and QA Score carry 25% each.</p>
-          <div class="pill-row" style="margin-top:14px">
-            <span class="score-chip">Performance 50%</span>
-            <span class="score-chip">Attendance 25%</span>
-            <span class="score-chip">QA 25%</span>
-          </div>
-          <p class="footnote">Attendance intentionally uses scores 1, 2, 3, and 5 only, based on the scoring guide you confirmed.</p>
         </div>
       </div>
     </section>
@@ -594,6 +412,7 @@ tbody tr:hover{background:#f8fbff}
     </section>
 
     <section class="cards" id="summary-cards"></section>
+    <section class="mini-grid" id="kpi-mini-grid"></section>
 
     <section class="layout">
       <div class="stack">
@@ -601,14 +420,14 @@ tbody tr:hover{background:#f8fbff}
           <div class="section-head">
             <div>
               <h3>Monthly Weighted KPI Trend</h3>
-              <p>Trend line of overall KPI score across recent months. This helps show whether the team is improving, slipping, or holding steady.</p>
+              <p>Overall weighted KPI score by month for the active filter.</p>
             </div>
             <div class="legend">
               <span><strong id="trend-current-score">-</strong> current</span>
               <span><strong id="trend-previous-score">-</strong> previous</span>
             </div>
           </div>
-          <div class="chart-wrap"><canvas id="trend-chart" width="860" height="320"></canvas></div>
+          <div class="chart-wrap"><canvas id="trend-chart" width="960" height="320"></canvas></div>
         </div>
 
         <div class="chart-panel panel">
@@ -617,9 +436,7 @@ tbody tr:hover{background:#f8fbff}
               <h3 id="comparison-title">Focused KPI Comparison</h3>
               <p id="comparison-copy">Current month versus previous month view for the selected KPI.</p>
             </div>
-            <div class="legend">
-              <span id="metric-direction">-</span>
-            </div>
+            <div class="legend"><span id="metric-direction">-</span></div>
           </div>
           <div class="compare-grid" id="comparison-grid"></div>
         </div>
@@ -628,7 +445,7 @@ tbody tr:hover{background:#f8fbff}
           <div class="section-head">
             <div>
               <h3>Agent Monthly Detail</h3>
-              <p>Roster-style detail to review raw values, KPI scores, and overall weighted score. This is where we can later match the Google Sheets columns.</p>
+              <p>Raw values, KPI scores, and weighted result for each agent in the filtered view.</p>
             </div>
             <div class="table-note" id="table-count">-</div>
           </div>
@@ -660,18 +477,18 @@ tbody tr:hover{background:#f8fbff}
           <div class="section-head">
             <div>
               <h3>KPI Score Distribution</h3>
-              <p>Count of agents landing on score 1 to 5 for the selected KPI. Click another KPI above to pivot this view instantly.</p>
+              <p>Agent count by score bucket for the selected KPI.</p>
             </div>
             <div class="legend" id="distribution-legend"></div>
           </div>
-          <div class="chart-wrap"><canvas id="distribution-chart" width="620" height="320"></canvas></div>
+          <div class="chart-wrap"><canvas id="distribution-chart" width="640" height="320"></canvas></div>
         </div>
 
         <div class="chart-panel panel">
           <div class="section-head">
             <div>
               <h3>Top Performers</h3>
-              <p>Top agents for the selected month. Clicking a name filters the whole dashboard down to that agent.</p>
+              <p>Click a name to filter the dashboard to that agent.</p>
             </div>
             <div class="legend"><span id="leaderboard-scope">All teams</span></div>
           </div>
@@ -682,7 +499,7 @@ tbody tr:hover{background:#f8fbff}
           <div class="section-head">
             <div>
               <h3>KPI Score Guide</h3>
-              <p>Draft scoring reference based on the KPI image you shared. Attendance score 4 is left intentionally blank because the source image was blank.</p>
+              <p>Reference rules based on the KPI scoring you provided.</p>
             </div>
           </div>
           <div class="table-wrap">
@@ -727,7 +544,7 @@ tbody tr:hover{background:#f8fbff}
                   <td>&lt;90%</td>
                   <td>90-94%</td>
                   <td>95-99%</td>
-                  <td>Blank</td>
+                  <td>-</td>
                   <td>100%</td>
                 </tr>
                 <tr>
@@ -741,12 +558,11 @@ tbody tr:hover{background:#f8fbff}
               </tbody>
             </table>
           </div>
-          <p class="footnote">Next step later: connect this same layout to Google Sheets JSON or Apps Script so the filters and visuals will use live production data instead of the local demo dataset.</p>
+          <p class="footnote">Performance = average of Transfer Rate, # of Admits, and AHT, then weighted at 50%. Attendance and QA are weighted at 25% each.</p>
         </div>
       </div>
     </section>
   </div>
-
   <script type="module" src="./app.js"></script>
 </body>
 </html>
