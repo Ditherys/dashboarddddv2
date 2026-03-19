@@ -15,7 +15,8 @@ const state = {
   selectedTeam: "all",
   selectedAgent: "all",
   search: "",
-  focusedKpi: "overall"
+  focusedKpi: "overall",
+  charts: {}
 };
 
 const els = {
@@ -44,6 +45,8 @@ const els = {
   tableCount: document.getElementById("table-count"),
   distributionChart: document.getElementById("distribution-chart"),
   distributionLegend: document.getElementById("distribution-legend"),
+  admitsChart: document.getElementById("admits-chart"),
+  admitsChartScope: document.getElementById("admits-chart-scope"),
   leaderboard: document.getElementById("leaderboard"),
   leaderboardScope: document.getElementById("leaderboard-scope")
 };
@@ -111,34 +114,24 @@ function populateControls() {
 }
 
 function populateMonthSelect() {
-  els.monthSelect.innerHTML = state.data.months
-    .map((month) => `<option value="${month.key}">${month.label}</option>`)
-    .join("");
+  els.monthSelect.innerHTML = state.data.months.map((month) => `<option value="${month.key}">${month.label}</option>`).join("");
   els.monthSelect.value = state.selectedMonth;
 }
 
 function populateTeamSelect() {
-  const options = ['<option value="all">All Teams</option>']
-    .concat(state.data.teams.map((team) => `<option value="${team}">${team}</option>`));
-  els.teamSelect.innerHTML = options.join("");
+  els.teamSelect.innerHTML = ['<option value="all">All Teams</option>'].concat(state.data.teams.map((team) => `<option value="${team}">${team}</option>`)).join("");
   els.teamSelect.value = state.selectedTeam;
 }
 
 function populateAgentSelect() {
   const rows = getCurrentMonthRows().filter((row) => state.selectedTeam === "all" || row.team === state.selectedTeam);
-  const options = ['<option value="all">All Agents</option>']
-    .concat(rows.map((row) => row.agent).sort().map((agent) => `<option value="${agent}">${agent}</option>`));
-  els.agentSelect.innerHTML = options.join("");
-  if (![...els.agentSelect.options].some((option) => option.value === state.selectedAgent)) {
-    state.selectedAgent = "all";
-  }
+  els.agentSelect.innerHTML = ['<option value="all">All Agents</option>'].concat(rows.map((row) => row.agent).sort().map((agent) => `<option value="${agent}">${agent}</option>`)).join("");
+  if (![...els.agentSelect.options].some((option) => option.value === state.selectedAgent)) state.selectedAgent = "all";
   els.agentSelect.value = state.selectedAgent;
 }
 
 function populateFocusButtons() {
-  els.focusButtons.innerHTML = KPI_OPTIONS
-    .map((item) => `<button class="score-chip${item.key === state.focusedKpi ? " active" : ""}" data-kpi="${item.key}" type="button">${item.label}</button>`)
-    .join("");
+  els.focusButtons.innerHTML = KPI_OPTIONS.map((item) => `<button class="score-chip${item.key === state.focusedKpi ? " active" : ""}" data-kpi="${item.key}" type="button">${item.label}</button>`).join("");
   els.focusButtons.querySelectorAll("[data-kpi]").forEach((button) => {
     button.addEventListener("click", () => {
       state.focusedKpi = button.getAttribute("data-kpi");
@@ -163,24 +156,14 @@ function render() {
   renderTrendChart();
   renderComparison(summary, previousSummary);
   renderDistributionChart(filteredRows);
+  renderAdmitsChart(filteredRows);
   renderLeaderboard(filteredRows);
   renderDetailTable(filteredRows);
 }
 
 function updateHeader(selectedMonth, previousMonth) {
-  const summaryLabel = state.selectedAgent !== "all"
-    ? `${state.selectedAgent} in ${selectedMonth.label}`
-    : state.selectedTeam !== "all"
-      ? `${state.selectedTeam} in ${selectedMonth.label}`
-      : `All teams overview for ${selectedMonth.label}`;
-
-  els.lastRefresh.textContent = new Date().toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  });
+  const summaryLabel = state.selectedAgent !== "all" ? `${state.selectedAgent} in ${selectedMonth.label}` : state.selectedTeam !== "all" ? `${state.selectedTeam} in ${selectedMonth.label}` : `All teams overview for ${selectedMonth.label}`;
+  els.lastRefresh.textContent = new Date().toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   els.selectedMonthLabel.textContent = selectedMonth.label;
   els.comparisonMonthLabel.textContent = previousMonth ? previousMonth.label : "No prior month";
   els.focusKpiLabel.textContent = getKpiLabel(state.focusedKpi);
@@ -190,61 +173,83 @@ function updateHeader(selectedMonth, previousMonth) {
 
 function renderSummaryCards(summary, previousSummary) {
   const cards = [
-    {
-      title: "Transfer Rate",
-      sub: `Avg score ${summarizeScore("transferRate", summary)} / 5`,
-      value: formatPercent(summary.transferRate),
-      delta: summary.transferRate - previousSummary.transferRate,
-      metric: "transferRate"
-    },
-    {
-      title: "# of Admits",
-      sub: `Avg score ${summarizeScore("admits", summary)} / 5`,
-      value: summary.admits.toFixed(1),
-      delta: summary.admits - previousSummary.admits,
-      metric: "admits"
-    },
-    {
-      title: "AHT",
-      sub: `Avg score ${summarizeScore("aht", summary)} / 5`,
-      value: formatTimeFromSeconds(summary.ahtSeconds),
-      delta: summary.ahtSeconds - previousSummary.ahtSeconds,
-      metric: "aht"
-    },
-    {
-      title: "Attendance",
-      sub: `Avg score ${summary.attendanceScore.toFixed(2)} / 5`,
-      value: formatPercent(summary.attendance),
-      delta: summary.attendance - previousSummary.attendance,
-      metric: "attendancePercent"
-    },
-    {
-      title: "QA Score",
-      sub: `Avg score ${summary.qaScore.toFixed(2)} / 5`,
-      value: formatPercent(summary.qa),
-      delta: summary.qa - previousSummary.qa,
-      metric: "qaPercent"
-    }
+    { title: "Transfer Rate", sub: `Avg score ${summarizeScore("transferRate", summary)} / 5`, value: formatPercent(summary.transferRate), delta: summary.transferRate - previousSummary.transferRate, metric: "transferRate" },
+    { title: "# of Admits", sub: `Avg score ${summarizeScore("admits", summary)} / 5`, value: summary.admits.toFixed(1), delta: summary.admits - previousSummary.admits, metric: "admits" },
+    { title: "AHT", sub: `Avg score ${summarizeScore("aht", summary)} / 5`, value: formatTimeFromSeconds(summary.ahtSeconds), delta: summary.ahtSeconds - previousSummary.ahtSeconds, metric: "aht" },
+    { title: "Attendance", sub: `Avg score ${summary.attendanceScore.toFixed(2)} / 5`, value: formatPercent(summary.attendance), delta: summary.attendance - previousSummary.attendance, metric: "attendancePercent" },
+    { title: "QA Score", sub: `Avg score ${summary.qaScore.toFixed(2)} / 5`, value: formatPercent(summary.qa), delta: summary.qa - previousSummary.qa, metric: "qaPercent" }
   ];
 
-  els.summaryCards.innerHTML = cards.map((card) => {
-    const delta = formatMetricDelta(card.metric, card.delta);
-    const tone = getDeltaTone(card.metric, card.delta);
+  els.summaryCards.innerHTML = cards.map((card) => `
+    <article class="card panel">
+      <div class="card-header"><div><h3>${card.title}</h3><span>${card.sub}</span></div></div>
+      <strong>${card.value}</strong>
+      <div class="delta ${getDeltaTone(card.metric, card.delta)}">${formatMetricDelta(card.metric, card.delta)}</div>
+    </article>
+  `).join("");
+}
+
+function renderMiniCharts() {
+  const configs = [
+    { key: "transferRate", title: "Transfer Rate" },
+    { key: "admits", title: "# of Admits" },
+    { key: "aht", title: "AHT" },
+    { key: "attendancePercent", title: "Attendance" },
+    { key: "qaPercent", title: "QA Score" }
+  ];
+  const currentSummary = summarizeRows(getFilteredRows(getSelectedMonth().rows));
+  const previousMonth = getPreviousMonth(getSelectedMonth().key);
+  const previousSummary = previousMonth ? summarizeRows(getFilteredRows(previousMonth.rows, { allowMissingAgentFallback: true })) : summarizeRows([]);
+
+  els.kpiMiniGrid.innerHTML = configs.map((config) => {
+    const currentValue = getMiniMetricValue(currentSummary, config.key);
+    const previousValue = getMiniMetricValue(previousSummary, config.key);
+    const delta = currentValue - previousValue;
     return `
-      <article class="card panel">
-        <div class="card-header">
-          <div><h3>${card.title}</h3><span>${card.sub}</span></div>
+      <article class="mini-chart-card panel">
+        <div class="mini-chart-head">
+          <div><h4>${config.title}</h4><p>Hover for monthly values</p></div>
+          <div class="mini-chart-meta">
+            <strong>${formatMiniMetric(config.key, currentValue)}</strong>
+            <span class="${getDeltaTone(config.key, delta)}">${formatMetricDelta(config.key, delta)}</span>
+          </div>
         </div>
-        <strong>${card.value}</strong>
-        <div class="delta ${tone}">${delta}</div>
+        <canvas class="mini-canvas" data-mini-kpi="${config.key}" width="320" height="120"></canvas>
       </article>
     `;
   }).join("");
+
+  els.kpiMiniGrid.querySelectorAll("[data-mini-kpi]").forEach((canvas) => {
+    const key = canvas.getAttribute("data-mini-kpi");
+    const series = state.data.months.map((month) => {
+      const summary = summarizeRows(getFilteredRows(month.rows, { allowMissingAgentFallback: true }));
+      return { monthKey: month.key, label: month.shortLabel, value: getMiniMetricValue(summary, key) };
+    });
+
+    upsertChart(`mini-${key}`, canvas, {
+      type: "line",
+      data: {
+        labels: series.map((item) => item.label),
+        datasets: [{
+          label: getKpiLabel(key === "attendancePercent" ? "attendance" : key === "qaPercent" ? "qa" : key),
+          data: series.map((item) => item.value),
+          borderColor: "#15629e",
+          backgroundColor: "rgba(21,98,158,.14)",
+          pointBackgroundColor: series.map((item) => item.monthKey === getSelectedMonth().key ? "#1f255d" : "#5da9df"),
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: series.map((item) => item.monthKey === getSelectedMonth().key ? 4 : 2.5),
+          tension: .35,
+          fill: true,
+          borderWidth: 2
+        }]
+      },
+      options: buildMiniChartOptions(key)
+    });
+  });
 }
 
 function renderTrendChart() {
-  const canvas = els.trendChart;
-  const ctx = canvas.getContext("2d");
   const trend = state.data.months.map((month) => ({
     key: month.key,
     label: month.shortLabel,
@@ -257,188 +262,25 @@ function renderTrendChart() {
   els.trendCurrentScore.textContent = currentScore ? currentScore.toFixed(2) : "-";
   els.trendPreviousScore.textContent = previousScore ? previousScore.toFixed(2) : "-";
 
-  const { width, height } = canvas;
-  const padding = { top: 24, right: 22, bottom: 38, left: 40 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const minValue = 1;
-  const maxValue = 5;
-
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#f8fbff";
-  ctx.fillRect(0, 0, width, height);
-
-  for (let step = 1; step <= 5; step += 1) {
-    const y = padding.top + chartHeight - ((step - minValue) / (maxValue - minValue)) * chartHeight;
-    ctx.strokeStyle = "#dde8f5";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-    ctx.fillStyle = "#7a90ac";
-    ctx.font = "12px Manrope";
-    ctx.fillText(step.toFixed(0), 12, y + 4);
-  }
-
-  const points = trend.map((item, index) => ({
-    x: padding.left + (chartWidth / Math.max(trend.length - 1, 1)) * index,
-    y: padding.top + chartHeight - ((item.score - minValue) / (maxValue - minValue)) * chartHeight,
-    label: item.label,
-    score: item.score
-  }));
-
-  const gradient = ctx.createLinearGradient(0, padding.top, 0, height);
-  gradient.addColorStop(0, "rgba(31,124,193,.3)");
-  gradient.addColorStop(1, "rgba(31,124,193,0)");
-
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, height - padding.bottom);
-  points.forEach((point) => ctx.lineTo(point.x, point.y));
-  ctx.lineTo(points[points.length - 1].x, height - padding.bottom);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
-
-  ctx.beginPath();
-  points.forEach((point, index) => {
-    if (index === 0) ctx.moveTo(point.x, point.y);
-    else ctx.lineTo(point.x, point.y);
-  });
-  ctx.strokeStyle = "#1f7cc1";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  points.forEach((point, index) => {
-    ctx.beginPath();
-    ctx.arc(point.x, point.y, index === currentIndex ? 7 : 5, 0, Math.PI * 2);
-    ctx.fillStyle = index === currentIndex ? "#2d2d72" : "#77b8eb";
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "#ffffff";
-    ctx.stroke();
-
-    ctx.fillStyle = "#5c7493";
-    ctx.font = "12px Manrope";
-    ctx.textAlign = "center";
-    ctx.fillText(point.label, point.x, height - 14);
-  });
-}
-
-function renderMiniCharts() {
-  const configs = [
-    { key: "transferRate", title: "Transfer Rate", formatter: (value) => formatPercent(value) },
-    { key: "admits", title: "# of Admits", formatter: (value) => value.toFixed(1) },
-    { key: "aht", title: "AHT", formatter: (value) => formatTimeFromSeconds(value) },
-    { key: "attendancePercent", title: "Attendance", formatter: (value) => formatPercent(value) },
-    { key: "qaPercent", title: "QA Score", formatter: (value) => formatPercent(value) }
-  ];
-
-  els.kpiMiniGrid.innerHTML = configs.map((config) => {
-    const currentSummary = summarizeRows(getFilteredRows(getSelectedMonth().rows));
-    const previousMonth = getPreviousMonth(getSelectedMonth().key);
-    const previousSummary = previousMonth ? summarizeRows(getFilteredRows(previousMonth.rows, { allowMissingAgentFallback: true })) : summarizeRows([]);
-    const currentValue = getMiniMetricValue(currentSummary, config.key);
-    const delta = currentValue - getMiniMetricValue(previousSummary, config.key);
-    const tone = getDeltaTone(config.key === "attendancePercent" ? "attendancePercent" : config.key === "qaPercent" ? "qaPercent" : config.key, delta);
-    return `
-      <article class="mini-chart-card panel">
-        <div class="mini-chart-head">
-          <div>
-            <h4>${config.title}</h4>
-            <p>Monthly trend</p>
-          </div>
-          <div class="mini-chart-meta">
-            <strong>${config.formatter(currentValue)}</strong>
-            <span class="${tone}">${formatMetricDelta(config.key, delta)}</span>
-          </div>
-        </div>
-        <canvas class="mini-canvas" data-mini-kpi="${config.key}" width="320" height="120"></canvas>
-      </article>
-    `;
-  }).join("");
-
-  els.kpiMiniGrid.querySelectorAll("[data-mini-kpi]").forEach((canvas) => {
-    drawMiniTrend(canvas, canvas.getAttribute("data-mini-kpi"));
-  });
-}
-
-function drawMiniTrend(canvas, key) {
-  const ctx = canvas.getContext("2d");
-  const series = state.data.months.map((month) => {
-    const summary = summarizeRows(getFilteredRows(month.rows, { allowMissingAgentFallback: true }));
-    return {
-      label: month.shortLabel,
-      value: getMiniMetricValue(summary, key)
-    };
-  });
-  const { width, height } = canvas;
-  const padding = { top: 12, right: 10, bottom: 20, left: 10 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const values = series.map((item) => item.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = Math.max(max - min, 1);
-  const selectedKey = getSelectedMonth().key;
-
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#f6fbff";
-  ctx.fillRect(0, 0, width, height);
-
-  for (let step = 0; step < 3; step += 1) {
-    const y = padding.top + (chartHeight / 2) * step;
-    ctx.strokeStyle = "#dde8f5";
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-  }
-
-  const points = series.map((item, index) => ({
-    x: padding.left + (chartWidth / Math.max(series.length - 1, 1)) * index,
-    y: padding.top + chartHeight - ((item.value - min) / range) * chartHeight,
-    selected: state.data.months[index].key === selectedKey,
-    label: item.label,
-    value: item.value
-  }));
-
-  const gradient = ctx.createLinearGradient(0, padding.top, 0, height);
-  gradient.addColorStop(0, "rgba(21,98,158,.22)");
-  gradient.addColorStop(1, "rgba(21,98,158,0)");
-
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, height - padding.bottom);
-  points.forEach((point) => ctx.lineTo(point.x, point.y));
-  ctx.lineTo(points[points.length - 1].x, height - padding.bottom);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
-  ctx.fill();
-
-  ctx.beginPath();
-  points.forEach((point, index) => {
-    if (index === 0) ctx.moveTo(point.x, point.y);
-    else ctx.lineTo(point.x, point.y);
-  });
-  ctx.strokeStyle = "#15629e";
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  points.forEach((point, index) => {
-    ctx.beginPath();
-    ctx.arc(point.x, point.y, point.selected ? 5 : 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = point.selected ? "#1f255d" : "#5da9df";
-    ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    if (index === 0 || index === points.length - 1 || point.selected) {
-      ctx.fillStyle = "#5a728f";
-      ctx.font = "10px Manrope";
-      ctx.textAlign = "center";
-      ctx.fillText(point.label, point.x, height - 6);
-    }
+  upsertChart("trend", els.trendChart, {
+    type: "line",
+    data: {
+      labels: trend.map((item) => item.label),
+      datasets: [{
+        label: "Weighted KPI Score",
+        data: trend.map((item) => item.score),
+        borderColor: "#15629e",
+        backgroundColor: "rgba(21,98,158,.16)",
+        pointBackgroundColor: trend.map((item) => item.key === getSelectedMonth().key ? "#1f255d" : "#5da9df"),
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2,
+        pointRadius: trend.map((item) => item.key === getSelectedMonth().key ? 6 : 4),
+        borderWidth: 3,
+        tension: .35,
+        fill: true
+      }]
+    },
+    options: buildChartOptions({ min: 1, max: 5, valueLabel: "Weighted KPI Score", tooltipFormatter: (value) => value.toFixed(2) })
   });
 }
 
@@ -452,7 +294,7 @@ function renderComparison(summary, previousSummary) {
 
   els.comparisonTitle.textContent = `${getKpiLabel(state.focusedKpi)} Comparison`;
   els.comparisonCopy.textContent = `${currentInfo.copy} versus the previous month in the current filter context.`;
-  els.metricDirection.textContent = `${delta === 0 ? "Flat versus previous month" : `${delta > 0 ? "Up" : "Down"} ${formatSigned(delta, state.focusedKpi)}`}`;
+  els.metricDirection.textContent = delta === 0 ? "Flat versus previous month" : `${delta > 0 ? "Up" : "Down"} ${formatSigned(delta, state.focusedKpi)}`;
 
   els.comparisonGrid.innerHTML = [
     { title: "Current Month", info: currentInfo, value: currentValue },
@@ -468,65 +310,62 @@ function renderComparison(summary, previousSummary) {
 }
 
 function renderDistributionChart(rows) {
-  const canvas = els.distributionChart;
-  const ctx = canvas.getContext("2d");
-  const counts = [1, 2, 3, 4, 5].map((score) => rows.filter((row) => getRowScore(row, state.focusedKpi) === score).length);
   const labels = ["1", "2", "3", "4", "5"];
-  const colors = ["#d84a55", "#f39c3d", "#9bb7d4", "#5fa5da", "#2d2d72"];
-  const maxCount = Math.max(...counts, 1);
-  const { width, height } = canvas;
-  const padding = { top: 20, right: 20, bottom: 36, left: 36 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-  const barWidth = chartWidth / labels.length - 18;
+  const counts = [1, 2, 3, 4, 5].map((score) => rows.filter((row) => getRowScore(row, state.focusedKpi) === score).length);
+  const colors = ["#c64954", "#cf8a27", "#9bb7d4", "#5fa5da", "#1f255d"];
 
-  ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#f8fbff";
-  ctx.fillRect(0, 0, width, height);
-
-  for (let step = 0; step <= maxCount; step += Math.max(1, Math.ceil(maxCount / 4))) {
-    const y = padding.top + chartHeight - (step / maxCount) * chartHeight;
-    ctx.strokeStyle = "#dde8f5";
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-    ctx.fillStyle = "#7a90ac";
-    ctx.font = "12px Manrope";
-    ctx.fillText(String(step), 12, y + 4);
-  }
-
-  labels.forEach((label, index) => {
-    const barHeight = (counts[index] / maxCount) * chartHeight;
-    const x = padding.left + index * (chartWidth / labels.length) + 9;
-    const y = padding.top + chartHeight - barHeight;
-    ctx.fillStyle = colors[index];
-    roundRect(ctx, x, y, barWidth, barHeight, 14);
-    ctx.fill();
-
-    ctx.fillStyle = "#1a2d49";
-    ctx.textAlign = "center";
-    ctx.font = "700 13px Manrope";
-    ctx.fillText(String(counts[index]), x + barWidth / 2, y - 8);
-    ctx.fillStyle = "#5c7493";
-    ctx.font = "12px Manrope";
-    ctx.fillText(label, x + barWidth / 2, height - 12);
+  upsertChart("distribution", els.distributionChart, {
+    type: "bar",
+    data: { labels, datasets: [{ label: `${getKpiLabel(state.focusedKpi)} score distribution`, data: counts, backgroundColor: colors, borderRadius: 10 }] },
+    options: buildChartOptions({ valueLabel: "Agents", tooltipFormatter: (value, label) => `${value} agent(s) in score ${label}` })
   });
 
   els.distributionLegend.innerHTML = labels.map((label, index) => `<span><i style="display:inline-block;width:10px;height:10px;border-radius:999px;background:${colors[index]}"></i> Score ${label}</span>`).join("");
 }
 
+function renderAdmitsChart(rows) {
+  const ranked = [...rows].sort((a, b) => b.admits - a.admits).slice(0, 10);
+  els.admitsChartScope.textContent = state.selectedAgent !== "all" ? `${state.selectedAgent} selected` : state.selectedTeam !== "all" ? `${state.selectedTeam} team` : "All teams";
+
+  upsertChart("admits", els.admitsChart, {
+    type: "bar",
+    data: {
+      labels: ranked.map((row) => row.agent),
+      datasets: [{ label: "# of Admits", data: ranked.map((row) => row.admits), backgroundColor: ranked.map((row) => row.agent === state.selectedAgent ? "#1f255d" : "#5da9df"), borderRadius: 10 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: "y",
+      onClick: (_, elements, chart) => {
+        if (!elements.length) return;
+        state.selectedAgent = chart.data.labels[elements[0].index];
+        els.agentSelect.value = state.selectedAgent;
+        render();
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(12,23,48,.96)",
+          padding: 10,
+          displayColors: false,
+          callbacks: {
+            title: (items) => items[0].label,
+            label: (context) => `${context.raw} admits`
+          }
+        }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { color: "#5a728f", font: { family: "Manrope", size: 11 } }, grid: { color: "#dde8f5" } },
+        y: { ticks: { color: "#2b4362", font: { family: "Manrope", size: 11, weight: "700" } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
 function renderLeaderboard(rows) {
-  const topRows = [...rows]
-    .sort((a, b) => b.overallScore - a.overallScore)
-    .slice(0, 6);
-
-  els.leaderboardScope.textContent = state.selectedAgent !== "all"
-    ? state.selectedAgent
-    : state.selectedTeam !== "all"
-      ? state.selectedTeam
-      : "All teams";
-
+  const topRows = [...rows].sort((a, b) => b.overallScore - a.overallScore).slice(0, 6);
+  els.leaderboardScope.textContent = state.selectedAgent !== "all" ? state.selectedAgent : state.selectedTeam !== "all" ? state.selectedTeam : "All teams";
   if (!topRows.length) {
     els.leaderboard.innerHTML = '<div class="empty-state">No agents match the current filter.</div>';
     return;
@@ -534,11 +373,7 @@ function renderLeaderboard(rows) {
 
   els.leaderboard.innerHTML = topRows.map((row, index) => `
     <button class="leader-item${row.agent === state.selectedAgent ? " active" : ""}" data-agent="${row.agent}" type="button">
-      <div>
-        <small>#${index + 1} ${row.team}</small>
-        <strong>${row.agent}</strong>
-        <span>${formatPercent(row.transferRate)} transfer | ${row.admits} admits | ${formatTimeFromSeconds(row.ahtSeconds)} AHT</span>
-      </div>
+      <div><small>#${index + 1} ${row.team}</small><strong>${row.agent}</strong><span>${formatPercent(row.transferRate)} transfer | ${row.admits} admits | ${formatTimeFromSeconds(row.ahtSeconds)} AHT</span></div>
       <strong>${row.overallScore.toFixed(2)}</strong>
     </button>
   `).join("");
@@ -559,8 +394,7 @@ function renderDetailTable(rows) {
     return;
   }
 
-  const sortedRows = [...rows].sort((a, b) => b.overallScore - a.overallScore);
-  els.detailBody.innerHTML = sortedRows.map((row) => `
+  els.detailBody.innerHTML = [...rows].sort((a, b) => b.overallScore - a.overallScore).map((row) => `
     <tr>
       <td>${row.agent}</td>
       <td>${row.team}</td>
@@ -590,36 +424,17 @@ function getPreviousMonth(monthKey) {
 
 function getFilteredRows(rows, options = {}) {
   let nextRows = rows;
-  if (state.selectedTeam !== "all") {
-    nextRows = nextRows.filter((row) => row.team === state.selectedTeam);
-  }
+  if (state.selectedTeam !== "all") nextRows = nextRows.filter((row) => row.team === state.selectedTeam);
   if (state.selectedAgent !== "all") {
     nextRows = nextRows.filter((row) => row.agent === state.selectedAgent);
-    if (!nextRows.length && options.allowMissingAgentFallback) {
-      nextRows = rows.filter((row) => state.selectedTeam === "all" || row.team === state.selectedTeam);
-    }
+    if (!nextRows.length && options.allowMissingAgentFallback) nextRows = rows.filter((row) => state.selectedTeam === "all" || row.team === state.selectedTeam);
   }
-  if (state.search) {
-    nextRows = nextRows.filter((row) => row.agent.toLowerCase().includes(state.search));
-  }
+  if (state.search) nextRows = nextRows.filter((row) => row.agent.toLowerCase().includes(state.search));
   return nextRows;
 }
 
 function summarizeRows(rows) {
-  if (!rows.length) {
-    return {
-      count: 0,
-      overallScore: 0,
-      performanceScore: 0,
-      attendanceScore: 0,
-      qaScore: 0,
-      transferRate: 0,
-      admits: 0,
-      ahtSeconds: 0,
-      attendance: 0,
-      qa: 0
-    };
-  }
+  if (!rows.length) return { count: 0, overallScore: 0, performanceScore: 0, attendanceScore: 0, qaScore: 0, transferRate: 0, admits: 0, ahtSeconds: 0, attendance: 0, qa: 0 };
 
   const total = rows.reduce((acc, row) => {
     acc.overallScore += row.overallScore;
@@ -632,17 +447,7 @@ function summarizeRows(rows) {
     acc.attendance += row.attendance;
     acc.qa += row.qa;
     return acc;
-  }, {
-    overallScore: 0,
-    performanceScore: 0,
-    attendanceScore: 0,
-    qaScore: 0,
-    transferRate: 0,
-    admits: 0,
-    ahtSeconds: 0,
-    attendance: 0,
-    qa: 0
-  });
+  }, { overallScore: 0, performanceScore: 0, attendanceScore: 0, qaScore: 0, transferRate: 0, admits: 0, ahtSeconds: 0, attendance: 0, qa: 0 });
 
   return {
     count: rows.length,
@@ -680,20 +485,13 @@ function getMiniMetricValue(summary, key) {
 
 function formatMetric(key, value) {
   switch (key) {
-    case "transferRate":
-      return { display: formatPercent(value), subtext: "Average transfer rate", copy: "Transfer rate average" };
-    case "admits":
-      return { display: value.toFixed(1), subtext: "Average admits", copy: "Admits average" };
-    case "aht":
-      return { display: formatTimeFromSeconds(value), subtext: "Average handle time", copy: "AHT average" };
-    case "attendance":
-      return { display: value.toFixed(2), subtext: "Average KPI score", copy: "Attendance KPI score" };
-    case "qa":
-      return { display: value.toFixed(2), subtext: "Average KPI score", copy: "QA KPI score" };
-    case "performance":
-      return { display: value.toFixed(2), subtext: "Average KPI score", copy: "Performance KPI score" };
-    default:
-      return { display: value.toFixed(2), subtext: "Weighted final KPI score", copy: "Overall KPI score" };
+    case "transferRate": return { display: formatPercent(value), subtext: "Average transfer rate", copy: "Transfer rate average" };
+    case "admits": return { display: value.toFixed(1), subtext: "Average admits", copy: "Admits average" };
+    case "aht": return { display: formatTimeFromSeconds(value), subtext: "Average handle time", copy: "AHT average" };
+    case "attendance": return { display: value.toFixed(2), subtext: "Average KPI score", copy: "Attendance KPI score" };
+    case "qa": return { display: value.toFixed(2), subtext: "Average KPI score", copy: "QA KPI score" };
+    case "performance": return { display: value.toFixed(2), subtext: "Average KPI score", copy: "Performance KPI score" };
+    default: return { display: value.toFixed(2), subtext: "Weighted final KPI score", copy: "Overall KPI score" };
   }
 }
 
@@ -720,35 +518,35 @@ function getRowScore(row, key) {
 }
 
 function buildStory(selectedMonth, previousMonth) {
-  const scope = state.selectedAgent !== "all"
-    ? state.selectedAgent
-    : state.selectedTeam !== "all"
-      ? state.selectedTeam
-      : "all teams";
-  const comparePart = previousMonth ? `Benchmarking against ${previousMonth.label}.` : "No earlier month available yet.";
-  return `Viewing ${scope} for ${selectedMonth.label}. ${comparePart}`;
+  const scope = state.selectedAgent !== "all" ? state.selectedAgent : state.selectedTeam !== "all" ? state.selectedTeam : "all teams";
+  return `Viewing ${scope} for ${selectedMonth.label}. ${previousMonth ? `Benchmarking against ${previousMonth.label}.` : "No earlier month available yet."}`;
 }
 
 function getKpiLabel(key) {
   return KPI_OPTIONS.find((item) => item.key === key)?.label || "Overall KPI";
 }
 
-function formatDelta(value, digits = 2) {
-  if (Number.isNaN(value)) return "No previous month";
-  if (value === 0) return "No change";
-  return `${value > 0 ? "+" : ""}${value.toFixed(digits)} vs previous`;
-}
-
 function summarizeScore(metricKey, summary) {
   switch (metricKey) {
+    case "transferRate": return scoreTransferRate(summary.transferRate).toFixed(2);
+    case "admits": return scoreAdmits(summary.admits).toFixed(2);
+    case "aht": return scoreAht(summary.ahtSeconds).toFixed(2);
+    default: return "0.00";
+  }
+}
+
+function formatMiniMetric(key, value) {
+  switch (key) {
     case "transferRate":
-      return scoreTransferRate(summary.transferRate).toFixed(2);
+    case "attendancePercent":
+    case "qaPercent":
+      return formatPercent(value);
     case "admits":
-      return scoreAdmits(summary.admits).toFixed(2);
+      return value.toFixed(1);
     case "aht":
-      return scoreAht(summary.ahtSeconds).toFixed(2);
+      return formatTimeFromSeconds(value);
     default:
-      return "0.00";
+      return String(value);
   }
 }
 
@@ -759,13 +557,13 @@ function formatMetricDelta(metric, value) {
     case "transferRate":
     case "attendancePercent":
     case "qaPercent":
-      return `${value > 0 ? "+" : ""}${value.toFixed(1)} pts vs previous`;
+      return `${value > 0 ? "+" : ""}${value.toFixed(1)} pts vs prev`;
     case "admits":
-      return `${value > 0 ? "+" : ""}${value.toFixed(1)} vs previous`;
+      return `${value > 0 ? "+" : ""}${value.toFixed(1)} vs prev`;
     case "aht":
-      return `${value > 0 ? "+" : "-"}${formatTimeFromSeconds(Math.abs(value))} vs previous`;
+      return `${value > 0 ? "+" : "-"}${formatTimeFromSeconds(Math.abs(value))} vs prev`;
     default:
-      return formatDelta(value);
+      return `${value > 0 ? "+" : ""}${value.toFixed(2)} vs prev`;
   }
 }
 
@@ -773,12 +571,6 @@ function getDeltaTone(metric, value) {
   if (value === 0) return "flat";
   if (metric === "aht") return value < 0 ? "up" : "down";
   return value > 0 ? "up" : "down";
-}
-
-function formatSigned(value, key) {
-  if (key === "transferRate") return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
-  if (key === "aht") return `${value > 0 ? "+" : ""}${formatSecondsDelta(value)}`;
-  return `${value > 0 ? "+" : ""}${value.toFixed(2)}`;
 }
 
 function formatPercent(value) {
@@ -792,10 +584,10 @@ function formatTimeFromSeconds(seconds) {
   return `${String(minutes).padStart(2, "0")}:${String(remaining).padStart(2, "0")}`;
 }
 
-function formatSecondsDelta(seconds) {
-  const rounded = Math.round(seconds);
-  const sign = rounded > 0 ? "+" : rounded < 0 ? "-" : "";
-  return `${sign}${formatTimeFromSeconds(Math.abs(rounded))}`;
+function formatSigned(value, key) {
+  if (key === "transferRate") return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+  if (key === "aht") return `${value > 0 ? "+" : "-"}${formatTimeFromSeconds(Math.abs(value))}`;
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}`;
 }
 
 function scoreClass(score) {
@@ -805,18 +597,56 @@ function scoreClass(score) {
   return "tag bad";
 }
 
-function roundRect(ctx, x, y, width, height, radius) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
+function upsertChart(key, canvas, config) {
+  if (!canvas || typeof Chart === "undefined") return;
+  state.charts[key]?.destroy();
+  state.charts[key] = new Chart(canvas.getContext("2d"), config);
+}
+
+function buildChartOptions({ min, max, valueLabel, tooltipFormatter } = {}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "rgba(12,23,48,.96)",
+        padding: 10,
+        displayColors: false,
+        callbacks: {
+          label: (context) => `${valueLabel || context.dataset.label}: ${tooltipFormatter ? tooltipFormatter(context.raw, context.label) : context.raw}`
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: "#5a728f", font: { family: "Manrope", size: 11 } }, grid: { display: false } },
+      y: { min, max, beginAtZero: min === undefined, ticks: { color: "#5a728f", font: { family: "Manrope", size: 11 } }, grid: { color: "#dde8f5" } }
+    }
+  };
+}
+
+function buildMiniChartOptions(key) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "rgba(12,23,48,.96)",
+        padding: 10,
+        displayColors: false,
+        callbacks: {
+          label: (context) => formatMiniMetric(key, context.raw)
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: "#5a728f", font: { family: "Manrope", size: 10 }, maxRotation: 0 }, grid: { display: false } },
+      y: { ticks: { display: false }, grid: { color: "#e3edf8", drawTicks: false } }
+    }
+  };
 }
 
 function buildDataset() {
@@ -827,7 +657,6 @@ function buildDataset() {
     "Mika Torres", "Nico Dela Cruz", "Owen Garcia", "Paula Lim", "Quin Velasco", "Rae David",
     "Sean Castro", "Tina Gomez", "Uma Villanueva", "Vince Perez", "Wen Alonzo", "Ysa Romero"
   ];
-
   const months = [];
   const startDate = new Date("2025-09-01T00:00:00");
   let cursor = 0;
@@ -844,20 +673,14 @@ function buildDataset() {
       for (let member = 0; member < 6; member += 1) {
         const agent = names[cursor % names.length];
         cursor += 1;
-        const transferRate = clamp(2.1 + teamIndex * 1.1 + monthOffset * 0.55 + randomBetween(-1.5, 2.5), 1.2, 16.4);
-        const admits = clamp(2 + teamIndex + monthOffset * 0.6 + randomBetween(-2, 5), 0, 16);
-        const ahtSeconds = clamp(240 - monthOffset * 8 - teamIndex * 4 + randomBetween(-35, 30), 92, 265);
-        const attendance = clamp(91 + monthOffset * 0.7 + teamIndex * 0.4 + randomBetween(-3.5, 4), 86, 100);
-        const qa = clamp(95.1 + monthOffset * 0.32 + teamIndex * 0.15 + randomBetween(-1.8, 1.9), 92.5, 100);
-
         rows.push(buildRow({
           agent,
           team,
-          transferRate,
-          admits,
-          ahtSeconds,
-          attendance,
-          qa
+          transferRate: clamp(2.1 + teamIndex * 1.1 + monthOffset * 0.55 + randomBetween(-1.5, 2.5), 1.2, 16.4),
+          admits: clamp(2 + teamIndex + monthOffset * 0.6 + randomBetween(-2, 5), 0, 16),
+          ahtSeconds: clamp(240 - monthOffset * 8 - teamIndex * 4 + randomBetween(-35, 30), 92, 265),
+          attendance: clamp(91 + monthOffset * 0.7 + teamIndex * 0.4 + randomBetween(-3.5, 4), 86, 100),
+          qa: clamp(95.1 + monthOffset * 0.32 + teamIndex * 0.15 + randomBetween(-1.8, 1.9), 92.5, 100)
         }));
       }
     });
