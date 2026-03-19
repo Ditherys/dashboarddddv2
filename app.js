@@ -32,6 +32,7 @@ const els = {
   selectionSummary: document.getElementById("selection-summary"),
   dataStory: document.getElementById("data-story"),
   summaryCards: document.getElementById("summary-cards"),
+  kpiMiniGrid: document.getElementById("kpi-mini-grid"),
   trendChart: document.getElementById("trend-chart"),
   trendCurrentScore: document.getElementById("trend-current-score"),
   trendPreviousScore: document.getElementById("trend-previous-score"),
@@ -158,6 +159,7 @@ function render() {
   populateAgentSelect();
   updateHeader(selectedMonth, previousMonth);
   renderSummaryCards(summary, previousSummary);
+  renderMiniCharts();
   renderTrendChart();
   renderComparison(summary, previousSummary);
   renderDistributionChart(filteredRows);
@@ -320,6 +322,123 @@ function renderTrendChart() {
     ctx.font = "12px Manrope";
     ctx.textAlign = "center";
     ctx.fillText(point.label, point.x, height - 14);
+  });
+}
+
+function renderMiniCharts() {
+  const configs = [
+    { key: "transferRate", title: "Transfer Rate", formatter: (value) => formatPercent(value) },
+    { key: "admits", title: "# of Admits", formatter: (value) => value.toFixed(1) },
+    { key: "aht", title: "AHT", formatter: (value) => formatTimeFromSeconds(value) },
+    { key: "attendancePercent", title: "Attendance", formatter: (value) => formatPercent(value) },
+    { key: "qaPercent", title: "QA Score", formatter: (value) => formatPercent(value) }
+  ];
+
+  els.kpiMiniGrid.innerHTML = configs.map((config) => {
+    const currentSummary = summarizeRows(getFilteredRows(getSelectedMonth().rows));
+    const previousMonth = getPreviousMonth(getSelectedMonth().key);
+    const previousSummary = previousMonth ? summarizeRows(getFilteredRows(previousMonth.rows, { allowMissingAgentFallback: true })) : summarizeRows([]);
+    const currentValue = getMiniMetricValue(currentSummary, config.key);
+    const delta = currentValue - getMiniMetricValue(previousSummary, config.key);
+    const tone = getDeltaTone(config.key === "attendancePercent" ? "attendancePercent" : config.key === "qaPercent" ? "qaPercent" : config.key, delta);
+    return `
+      <article class="mini-chart-card panel">
+        <div class="mini-chart-head">
+          <div>
+            <h4>${config.title}</h4>
+            <p>Monthly trend</p>
+          </div>
+          <div class="mini-chart-meta">
+            <strong>${config.formatter(currentValue)}</strong>
+            <span class="${tone}">${formatMetricDelta(config.key, delta)}</span>
+          </div>
+        </div>
+        <canvas class="mini-canvas" data-mini-kpi="${config.key}" width="320" height="120"></canvas>
+      </article>
+    `;
+  }).join("");
+
+  els.kpiMiniGrid.querySelectorAll("[data-mini-kpi]").forEach((canvas) => {
+    drawMiniTrend(canvas, canvas.getAttribute("data-mini-kpi"));
+  });
+}
+
+function drawMiniTrend(canvas, key) {
+  const ctx = canvas.getContext("2d");
+  const series = state.data.months.map((month) => {
+    const summary = summarizeRows(getFilteredRows(month.rows, { allowMissingAgentFallback: true }));
+    return {
+      label: month.shortLabel,
+      value: getMiniMetricValue(summary, key)
+    };
+  });
+  const { width, height } = canvas;
+  const padding = { top: 12, right: 10, bottom: 20, left: 10 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const values = series.map((item) => item.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(max - min, 1);
+  const selectedKey = getSelectedMonth().key;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#f6fbff";
+  ctx.fillRect(0, 0, width, height);
+
+  for (let step = 0; step < 3; step += 1) {
+    const y = padding.top + (chartHeight / 2) * step;
+    ctx.strokeStyle = "#dde8f5";
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+  }
+
+  const points = series.map((item, index) => ({
+    x: padding.left + (chartWidth / Math.max(series.length - 1, 1)) * index,
+    y: padding.top + chartHeight - ((item.value - min) / range) * chartHeight,
+    selected: state.data.months[index].key === selectedKey,
+    label: item.label,
+    value: item.value
+  }));
+
+  const gradient = ctx.createLinearGradient(0, padding.top, 0, height);
+  gradient.addColorStop(0, "rgba(21,98,158,.22)");
+  gradient.addColorStop(1, "rgba(21,98,158,0)");
+
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, height - padding.bottom);
+  points.forEach((point) => ctx.lineTo(point.x, point.y));
+  ctx.lineTo(points[points.length - 1].x, height - padding.bottom);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  ctx.beginPath();
+  points.forEach((point, index) => {
+    if (index === 0) ctx.moveTo(point.x, point.y);
+    else ctx.lineTo(point.x, point.y);
+  });
+  ctx.strokeStyle = "#15629e";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  points.forEach((point, index) => {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, point.selected ? 5 : 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = point.selected ? "#1f255d" : "#5da9df";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if (index === 0 || index === points.length - 1 || point.selected) {
+      ctx.fillStyle = "#5a728f";
+      ctx.font = "10px Manrope";
+      ctx.textAlign = "center";
+      ctx.fillText(point.label, point.x, height - 6);
+    }
   });
 }
 
@@ -548,6 +667,14 @@ function getSummaryMetric(summary, key) {
     case "admits": return summary.admits;
     case "aht": return summary.ahtSeconds;
     default: return summary.overallScore;
+  }
+}
+
+function getMiniMetricValue(summary, key) {
+  switch (key) {
+    case "attendancePercent": return summary.attendance;
+    case "qaPercent": return summary.qa;
+    default: return getSummaryMetric(summary, key);
   }
 }
 
