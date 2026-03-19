@@ -207,7 +207,9 @@ function renderMiniCharts() {
           <span class="${getDeltaTone(key, delta)}">${formatMetricDelta(key, delta)}</span>
         </div>
       </div>
-      <canvas class="mini-canvas" data-mini-kpi="${key}" width="1280" height="170"></canvas>
+      <div class="mini-chart-body">
+        <canvas class="mini-canvas" data-mini-kpi="${key}"></canvas>
+      </div>
     </article>
   `;
 
@@ -605,6 +607,7 @@ function buildChartOptions({ min, max, valueLabel, tooltipFormatter } = {}) {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false,
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
